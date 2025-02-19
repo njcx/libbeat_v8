@@ -15,27 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !windows
+package sys
 
-package decode_xml_wineventlog
-
-import (
-	"github.com/njcx/libbeat_v8/sys/winevent"
-	"github.com/elastic/elastic-agent-libs/mapstr"
-)
-
-type nonWinDecoder struct{}
-
-func newDecoder() decoder {
-	return nonWinDecoder{}
+// InsufficientBufferError indicates the buffer passed to a system call is too
+// small.
+type InsufficientBufferError struct {
+	Cause        error
+	RequiredSize int // Size of the buffer that is required.
 }
 
-func (nonWinDecoder) decode(data []byte) (mapstr.M, mapstr.M, error) {
-	evt, err := winevent.UnmarshalXML(data)
-	if err != nil {
-		return nil, nil, err
-	}
-	winevent.EnrichRawValuesWithNames(nil, &evt)
-	win, ecs := fields(evt)
-	return win, ecs, nil
+// Error returns the cause of the insufficient buffer error.
+func (e InsufficientBufferError) Error() string {
+	return e.Cause.Error()
 }

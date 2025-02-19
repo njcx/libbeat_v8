@@ -15,27 +15,32 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !windows
+//go:build windows
 
-package decode_xml_wineventlog
+package wineventlog
 
 import (
-	"github.com/njcx/libbeat_v8/sys/winevent"
-	"github.com/elastic/elastic-agent-libs/mapstr"
+	"testing"
+	"unsafe"
+
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/windows"
 )
 
-type nonWinDecoder struct{}
+func TestStringInserts(t *testing.T) {
+	assert.NotNil(t, templateInserts)
 
-func newDecoder() decoder {
-	return nonWinDecoder{}
-}
+	si := newTemplateStringInserts()
+	defer si.clear()
 
-func (nonWinDecoder) decode(data []byte) (mapstr.M, mapstr.M, error) {
-	evt, err := winevent.UnmarshalXML(data)
-	if err != nil {
-		return nil, nil, err
+	// "The value of n can be a number between 1 and 99."
+	// https://docs.microsoft.com/en-us/windows/win32/eventlog/message-text-files
+	assert.Contains(t, windows.UTF16ToString(si.insertStrings[0]), " 1}")
+	assert.Contains(t, windows.UTF16ToString(si.insertStrings[maxInsertStrings-1]), " 99}")
+
+	for i, evtVariant := range si.evtVariants {
+		assert.EqualValues(t, uintptr(unsafe.Pointer(&si.insertStrings[i][0])), evtVariant.ValueAsUintPtr())
+		assert.Len(t, si.insertStrings[i], int(evtVariant.Count))
+		assert.Equal(t, evtVariant.Type, EvtVarTypeString)
 	}
-	winevent.EnrichRawValuesWithNames(nil, &evt)
-	win, ecs := fields(evt)
-	return win, ecs, nil
 }

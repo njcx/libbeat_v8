@@ -29,7 +29,7 @@ import (
 	"golang.org/x/sys/windows"
 
 	"github.com/njcx/libbeat_v8/beat"
-	"github.com/elastic/beats/v7/winlogbeat/sys/winevent"
+	"github.com/njcx/libbeat_v8/sys/winevent"
 	"github.com/elastic/elastic-agent-libs/mapstr"
 )
 

@@ -28,7 +28,7 @@ import (
 	"github.com/njcx/libbeat_v8/processors"
 	"github.com/njcx/libbeat_v8/processors/checks"
 	jsprocessor "github.com/njcx/libbeat_v8/processors/script/javascript/module/processor"
-	"github.com/elastic/beats/v7/winlogbeat/sys/winevent"
+	"github.com/njcx/libbeat_v8/sys/winevent"
 	conf "github.com/elastic/elastic-agent-libs/config"
 	"github.com/elastic/elastic-agent-libs/logp"
 	"github.com/elastic/elastic-agent-libs/mapstr"

@@ -15,27 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !windows
+package sys
 
-package decode_xml_wineventlog
-
-import (
-	"github.com/njcx/libbeat_v8/sys/winevent"
-	"github.com/elastic/elastic-agent-libs/mapstr"
-)
-
-type nonWinDecoder struct{}
-
-func newDecoder() decoder {
-	return nonWinDecoder{}
+// MessageFiles contains handles to event message files associated with an
+// event log source.
+type MessageFiles struct {
+	SourceName string
+	Err        error
+	Handles    []FileHandle
 }
 
-func (nonWinDecoder) decode(data []byte) (mapstr.M, mapstr.M, error) {
-	evt, err := winevent.UnmarshalXML(data)
-	if err != nil {
-		return nil, nil, err
-	}
-	winevent.EnrichRawValuesWithNames(nil, &evt)
-	win, ecs := fields(evt)
-	return win, ecs, nil
+// FileHandle contains the handle to a single Windows message file.
+type FileHandle struct {
+	File   string  // Fully-qualified path to the event message file.
+	Handle uintptr // Handle to the loaded event message file.
+	Err    error   // Error that occurred while loading Handle.
 }

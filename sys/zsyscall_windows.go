@@ -15,27 +15,26 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !windows
-
-package decode_xml_wineventlog
+package sys
 
 import (
-	"github.com/njcx/libbeat_v8/sys/winevent"
-	"github.com/elastic/elastic-agent-libs/mapstr"
+	"fmt"
+	"syscall"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
-type nonWinDecoder struct{}
+var (
+	modkernel = windows.NewLazySystemDLL("Kernel32.dll")
 
-func newDecoder() decoder {
-	return nonWinDecoder{}
-}
+	procSystemTimeToFileTime = modkernel.NewProc("SystemTimeToFileTime")
+)
 
-func (nonWinDecoder) decode(data []byte) (mapstr.M, mapstr.M, error) {
-	evt, err := winevent.UnmarshalXML(data)
-	if err != nil {
-		return nil, nil, err
+func SystemTimeToFileTime(systemTime *windows.Systemtime, fileTime *windows.Filetime) error {
+	r1, _, err := syscall.SyscallN(procSystemTimeToFileTime.Addr(), uintptr(unsafe.Pointer(systemTime)), uintptr(unsafe.Pointer(fileTime)))
+	if r1 == 0 {
+		return fmt.Errorf("error converting system time to file time: %w", err)
 	}
-	winevent.EnrichRawValuesWithNames(nil, &evt)
-	win, ecs := fields(evt)
-	return win, ecs, nil
+	return nil
 }

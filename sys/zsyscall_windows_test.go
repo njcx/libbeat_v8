@@ -15,27 +15,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !windows
-
-package decode_xml_wineventlog
+package sys
 
 import (
-	"github.com/njcx/libbeat_v8/sys/winevent"
-	"github.com/elastic/elastic-agent-libs/mapstr"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/windows"
 )
 
-type nonWinDecoder struct{}
-
-func newDecoder() decoder {
-	return nonWinDecoder{}
-}
-
-func (nonWinDecoder) decode(data []byte) (mapstr.M, mapstr.M, error) {
-	evt, err := winevent.UnmarshalXML(data)
-	if err != nil {
-		return nil, nil, err
+func TestSystemTimeToFileTime(t *testing.T) {
+	ts := time.Date(
+		2024, time.Month(9), 3,
+		0, 0, 0, 0, time.UTC).UnixNano()
+	st := windows.Systemtime{
+		Year:  2024,
+		Month: 9,
+		Day:   3,
 	}
-	winevent.EnrichRawValuesWithNames(nil, &evt)
-	win, ecs := fields(evt)
-	return win, ecs, nil
+	var ft windows.Filetime
+	if err := SystemTimeToFileTime(&st, &ft); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, ts, ft.Nanoseconds())
 }
